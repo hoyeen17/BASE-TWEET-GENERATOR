@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base Activity Tweet Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --text: #f0f0f0;
+      --muted: #888888;
+      --accent: #0052ff;
+      --accent-light: #4d8bff;
+      --accent-bg: rgba(0,82,255,0.12);
+      --success: #00c896;
+      --success-bg: rgba(0,200,150,0.1);
+      --warning: #f5a623;
+      --warning-bg: rgba(245,166,35,0.1);
+      --danger: #ff4444;
+      --danger-bg: rgba(255,68,68,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,82,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,82,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: var(--text); background: var(--surface2); }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .section { display: none; animation: fadeUp 0.3s ease both; }
+    .section.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    input[type="text"]::placeholder { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; }
+
+    select option { background: #1a1a1a; color: var(--text); }
+
+    .mono { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 11px 20px;
+      font-size: 14px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover { background: #003fd6; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { background: #333; color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .btn-secondary:hover { border-color: var(--border2); background: #222; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* Results */
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { color: var(--muted); }
+    .result-value { font-weight: 600; font-family: 'DM Mono', monospace; font-size: 13px; }
+    .result-value.blue { color: var(--accent-light); }
+
+    .tweet-output {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      min-height: 80px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .char-bar { margin-top: 8px; }
+    .char-bar-track { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 4px; }
+    .char-bar-fill { height: 3px; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+    .char-count { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; text-align: right; }
+
+    /* Alerts */
+    .alert {
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+    .alert-error { background: var(--danger-bg); border: 1px solid rgba(255,68,68,0.25); color: #ff8888; }
+    .alert-success { background: var(--success-bg); border: 1px solid rgba(0,200,150,0.25); color: var(--success); }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 1.5rem 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* Steps (guide) */
+    .step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      background: var(--accent-bg);
+      border: 1px solid rgba(0,82,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-light);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .code-block {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: #9ecbff;
+      margin: 8px 0;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge-free { background: var(--success-bg); color: var(--success); border: 1px solid rgba(0,200,150,0.25); }
+    .badge-req { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245,166,35,0.25); }
+
+    /* Warning box */
+    .warning-box {
+      background: var(--warning-bg);
+      border: 1px solid rgba(245,166,35,0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--warning);
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: var(--accent-bg);
+      border: 1px solid rgba(0,82,255,0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--accent-light);
+      line-height: 1.6;
+    }
+
+    /* API Key section */
+    .api-section {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      margin-top: 1rem;
+    }
+
+    .api-key-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .api-key-row input { flex: 1; font-family: 'DM Mono', monospace; font-size: 12px; }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer a { color: var(--accent-light); text-decoration: none; }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      .tab { font-size: 12px; padding: 7px 8px; }
+      h1 { font-size: 18px; }
+      .btn-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-icon">B</div>
+      <h1>Base Tweet Generator</h1>
+    </div>
+    <p class="subtitle">Turn your onchain activity into shareable tweets automatically.</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('app')">Generator</button>
+    <button class="tab" onclick="switchTab('setup')">Setup guide</button>
+    <button class="tab" onclick="switchTab('github')">GitHub guide</button>
+  </div>
+
+  <!-- ===== GENERATOR TAB ===== -->
+  <div id="tab-app" class="section active">
+
+    <div class="card">
+      <div class="card-title">Your wallet</div>
+      <label>Base wallet address</label>
+      <input type="text" id="wallet" placeholder="0x1234...abcd" class="mono" maxlength="42" />
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">Your public address only — never your private key or seed phrase.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">API keys</div>
+      <div style="margin-bottom:12px;">
+        <label>Basescan API key <span style="font-size:11px;color:var(--muted);">(get free at basescan.org/myapikey)</span></label>
+        <div class="api-key-row">
+          <input type="password" id="basescan-key" placeholder="Your Basescan API key" />
+          <button class="btn btn-secondary" onclick="toggleVis('basescan-key',this)" style="flex:0;white-space:nowrap;font-size:12px;padding:10px 12px;">Show</button>
+        </div>
+      </div>
+      <div>
+        <label>Claude API key <span style="font-size:11px;color:var(--muted);">(get free at console.anthropic.com)</span></label>
+        <div class="api-key-row">
+          <input type="password" id="claude-key" placeholder="sk-ant-..." />
+          <button class="btn btn-secondary" onclick="toggleVis('claude-key',this)" style="flex:0;white-space:nowrap;font-size:12px;padding:10px 12px;">Show</button>
+        </div>
+      </div>
+      <div class="warning-box" style="margin-top:12px;">
+        API keys are stored only in your browser memory and never sent anywhere except directly to the APIs. Never share your keys with anyone.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tweet settings</div>
+      <label>Tone</label>
+      <select id="tone">
+        <option value="excited">Excited &amp; hype (emojis + crypto energy)</option>
+        <option value="professional">Professional &amp; informative</option>
+        <option value="casual">Casual &amp; chill</option>
+        <option value="humble">Humble brag</option>
+        <option value="technical">Technical &amp; data-driven</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" id="generateBtn" onclick="generateTweet()">Generate tweet</button>
+
+    <div class="loading" id="loading">
+      <span class="spinner"></span> Fetching your Base activity...
+    </div>
+
+    <div class="alert alert-error" id="error"></div>
+
+    <div id="results" style="display:none;margin-top:1rem;">
+      <div class="card">
+        <div class="card-title">Your activity summary</div>
+        <div id="activity-summary"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Generated tweet</div>
+        <div class="tweet-output" id="tweet-output"></div>
+        <div class="char-bar">
+          <div class="char-bar-track"><div class="char-bar-fill" id="char-fill" style="width:0%"></div></div>
+          <div class="char-count" id="char-count">0 / 280</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="copyTweet()" id="copyBtn">Copy</button>
+          <button class="btn btn-secondary" onclick="postToX()">Post on X ↗</button>
+          <button class="btn btn-secondary" onclick="generateTweet()">Regenerate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SETUP GUIDE TAB ===== -->
+  <div id="tab-setup" class="section">
+    <div class="card">
+      <div class="card-title">What you need (all free)</div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <p class="step-title">A Base wallet <span class="badge badge-req">required</span></p>
+          <p class="step-desc">Download MetaMask from <strong>metamask.io</strong> or Coinbase Wallet. Switch the network to "Base" inside the app. Your wallet address starts with 0x and is safe to share publicly.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <p class="step-title">Basescan API key <span class="badge badge-free">free</span></p>
+          <p class="step-desc">Go to <strong>basescan.org/register</strong> and create a free account. Then go to your account settings and click "API Keys" to generate one. This lets the app read your public transaction history.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <p class="step-title">Claude API key <span class="badge badge-free">free credits</span></p>
+          <p class="step-desc">Go to <strong>console.anthropic.com</strong>, sign up, and go to "API Keys" to create one. New accounts get free credits. This is what generates the actual tweet text.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <p class="step-title">That's it — no installation needed</p>
+          <p class="step-desc">This is a pure HTML file. Just open it in any browser. No servers, no frameworks, no command line.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">How the app works</div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <p class="step-title">You enter your wallet address</p>
+          <p class="step-desc">The app takes your public 0x address — no password or private key needed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <p class="step-title">Fetches your transactions from Basescan</p>
+          <p class="step-desc">Using the Basescan API, the app retrieves your recent transaction history — counts, ETH volume, and contract interactions.</p>
+          <div class="code-block">GET https://api.basescan.org/api?module=account&action=txlist&address=0x...&apikey=YOUR_KEY</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <p class="step-title">Sends the data to Claude</p>
+          <p class="step-desc">The transaction summary is sent to the Claude API with instructions to write a tweet in your chosen tone.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <p class="step-title">Displays the tweet</p>
+          <p class="step-desc">You get a ready-to-post tweet with a copy button and direct link to post it on X.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      This app runs entirely in your browser. No data is stored on any server. Your API keys stay in your browser's memory and are cleared when you close the tab.
+    </div>
+  </div>
+
+  <!-- ===== GITHUB GUIDE TAB ===== -->
+  <div id="tab-github" class="section">
+
+    <div class="card">
+      <div class="card-title">What is a GitHub commit?</div>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);">A commit is a saved change to your code. Every time you update a file on GitHub and save it, that's one commit. Building and improving this project over time is the most natural way to build up your commit count on Base.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Step 1 — Upload this file to GitHub</div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <p class="step-title">Create a GitHub account</p>
+          <p class="step-desc">Go to <strong>github.com</strong> and sign up for free.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <p class="step-title">Create a new repository</p>
+          <p class="step-desc">Click the green "New" button. Name it something like <span class="mono">base-tweet-generator</span>. Set it to Public so others can see it. Click "Create repository".</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <p class="step-title">Upload index.html</p>
+          <p class="step-desc">Click "Add file" → "Upload files". Drag and drop the index.html file you downloaded. Add a commit message like "Initial upload" and click "Commit changes". That's your first commit.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Step 2 — Keep making commits by improving the app</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Every improvement you make and save to GitHub = one more commit. Here are easy things to improve:</p>
+      <div class="step">
+        <div class="step-num">→</div>
+        <div>
+          <p class="step-title">Change the color scheme</p>
+          <p class="step-desc">Edit the CSS variables at the top of the file. Change <span class="mono">--accent: #0052ff</span> to a different color. Save and commit.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">→</div>
+        <div>
+          <p class="step-title">Add a new tweet tone</p>
+          <p class="step-desc">In the HTML, find the &lt;select id="tone"&gt; section and add a new &lt;option&gt;. Then update the toneMap in the JavaScript.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">→</div>
+        <div>
+          <p class="step-title">Add a README</p>
+          <p class="step-desc">Create a new file called README.md in your repo and describe what the project does. That's another commit.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">→</div>
+        <div>
+          <p class="step-title">Fix bugs or add features</p>
+          <p class="step-desc">Use Claude to help you add new features — like showing NFT activity, or translating the tweet to another language.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Step 3 — Host it live (optional but impressive)</div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <p class="step-title">Go to Settings in your repo</p>
+          <p class="step-desc">Click "Settings" at the top of your GitHub repository.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <p class="step-title">Enable GitHub Pages</p>
+          <p class="step-desc">Scroll down to "Pages", set source to "Deploy from a branch", select "main" branch, and save. Your app will be live at <span class="mono">yourusername.github.io/base-tweet-generator</span>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning-box">
+      Remember: real commits come from real improvements. Making small, genuine changes over time is how developers actually work — and it's exactly what gives you a healthy commit history.
+    </div>
+  </div>
+
+  <div class="footer">
+    Built with the <a href="https://basescan.org" target="_blank">Basescan API</a> and <a href="https://anthropic.com" target="_blank">Claude API</a>.
+    Open source — improve it and commit.
+  </div>
+
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['app','setup','github'][i] === name);
+    });
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function toggleVis(id, btn) {
+    const el = document.getElementById(id);
+    if (el.type === 'password') { el.type = 'text'; btn.textContent = 'Hide'; }
+    else { el.type = 'password'; btn.textContent = 'Show'; }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error').style.display = 'none';
+  }
+
+  async function generateTweet() {
+    const wallet = document.getElementById('wallet').value.trim();
+    const basescanKey = document.getElementById('basescan-key').value.trim();
+    const claudeKey = document.getElementById('claude-key').value.trim();
+    const tone = document.getElementById('tone').value;
+
+    hideError();
+    document.getElementById('results').style.display = 'none';
+
+    if (!wallet || !wallet.startsWith('0x') || wallet.length !== 42) {
+      showError('Please enter a valid Base wallet address (starts with 0x, 42 characters total).');
+      return;
+    }
+    if (!basescanKey) { showError('Please enter your Basescan API key. Get one free at basescan.org/myapikey'); return; }
+    if (!claudeKey || !claudeKey.startsWith('sk-ant')) { showError('Please enter a valid Claude API key. Get one at console.anthropic.com'); return; }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('generateBtn').disabled = true;
+
+    let txCount = 0, totalEth = 0, uniqueContracts = 0, txData = null;
+
+    try {
+      const res = await fetch(`https://api.basescan.org/api?module=account&action=txlist&address=${wallet}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc&apikey=${basescanKey}`);
+      const data = await res.json();
+      if (data.status === '1' && Array.isArray(data.result)) {
+        txData = data.result;
+        txCount = txData.length;
+        totalEth = txData.reduce((s, tx) => s + parseFloat(tx.value || 0) / 1e18, 0);
+        const contracts = new Set(txData.filter(tx => tx.to && tx.input !== '0x').map(tx => tx.to));
+        uniqueContracts = contracts.size;
+      }
+    } catch (e) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('generateBtn').disabled = false;
+      showError('Could not fetch wallet data. Check your Basescan API key and wallet address.');
+      return;
+    }
+
+    const summary = txData
+      ? `${txCount} recent transactions on Base, total volume of ${totalEth.toFixed(4)} ETH, interacted with ${uniqueContracts} unique contracts`
+      : `active Base blockchain user`;
+
+    const toneMap = {
+      excited: 'very excited and hyped, use crypto slang, emojis like rocket and fire, make it feel like you just had a big moment onchain',
+      professional: 'professional and informative, no slang, suitable for a LinkedIn or business context',
+      casual: 'casual and relaxed, like texting a friend about what you did today',
+      humble: 'understated humble brag — clearly proud but trying not to show it too much',
+      technical: 'data-driven and technical, mention numbers and metrics, suitable for a crypto analyst audience'
+    };
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          messages: [{
+            role: 'user',
+            content: `Write a single tweet about my Base blockchain activity. Stats: ${summary}. Tone: ${toneMap[tone]}. Keep it under 260 characters. Include 2-3 relevant hashtags like #Base #onchain #Web3 #DeFi. Make it feel authentic and human, not robotic or generic. Return only the tweet text with no explanation, no quotes around it.`
+          }]
+        })
+      });
+
+      const aiData = await response.json();
+      if (aiData.error) throw new Error(aiData.error.message || 'Claude API error');
+      const tweet = aiData.content?.[0]?.text?.trim() || '';
+      if (!tweet) throw new Error('Empty response from Claude');
+
+      document.getElementById('tweet-output').textContent = tweet;
+      const pct = Math.min(100, Math.round((tweet.length / 280) * 100));
+      document.getElementById('char-fill').style.width = pct + '%';
+      document.getElementById('char-fill').style.background = tweet.length > 260 ? '#ff4444' : 'var(--accent)';
+      document.getElementById('char-count').textContent = tweet.length + ' / 280';
+
+      document.getElementById('activity-summary').innerHTML = txData ? `
+        <div class="result-row"><span class="result-label">Recent transactions</span><span class="result-value blue">${txCount}</span></div>
+        <div class="result-row"><span class="result-label">Total ETH volume</span><span class="result-value">${totalEth.toFixed(4)} ETH</span></div>
+        <div class="result-row"><span class="result-label">Unique contracts used</span><span class="result-value">${uniqueContracts}</span></div>
+        <div class="result-row"><span class="result-label">Network</span><span class="result-value blue">Base</span></div>
+      ` : '<p style="font-size:13px;color:var(--muted);">Activity generated from wallet profile.</p>';
+
+      document.getElementById('results').style.display = 'block';
+
+    } catch (e) {
+      showError('Could not generate tweet: ' + e.message + '. Check your Claude API key.');
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('generateBtn').disabled = false;
+  }
+
+  function copyTweet() {
+    const text = document.getElementById('tweet-output').textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  function postToX() {
+    const text = document.getElementById('tweet-output').textContent;
+    if (!text) return;
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+  }
+</script>
+</body>
+</html>
